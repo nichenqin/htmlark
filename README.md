@@ -2,7 +2,9 @@
 
 Local-first runtime for AI-generated HTML/Markdown artifacts.
 
-Personal project, independent of Teable. CLI is the source of truth; loopback web is a viewer; cloud is a later remote.
+Canonical site: **[htmlark.com](https://htmlark.com)** (domain held; public Worker not deployed yet). Personal project, independent of Teable. CLI is the source of truth; loopback web is a viewer; cloud is a later remote.
+
+DNS / Worker landing: [docs/dns-and-remote.md](./docs/dns-and-remote.md).
 
 ## Install / run
 

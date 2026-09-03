@@ -9,7 +9,7 @@
 | 日期 | 2026-09-03 |
 | 状态 | Draft（定位收窄：本地 coding-agent artifacts；非完整 Claude Artifacts 替代） |
 | 产品名 | **htmlark**（CLI `htmlark`；包 `@htmlark/runtime` `@htmlark/core`；应用 `apps/cli` `apps/web` `apps/remote`） |
-| 域名（待注册确认） | `htmlark.dev` / `htmlark.app` / `htmlark.com` — 2026-09-01 DNS 探测为 NXDOMAIN，**不是购买保证**。抢注失败则 fallback：`stillbox` 或 `relicary` |
+| 域名 | **`htmlark.com` 已持有**（2026-09-03 用户确认）。产品规范 origin。`htmlark.dev` / `htmlark.app` 未购则不作规范名，不作 schema `$id`。不再使用 stillbox / relicary fallback。 |
 | 定位 | **给所有 coding agent 共用的本地 Artifact 库：** 生成即预览、同一身份持续更新、版本可回溯；需要时发布到自己的 remote。**不是**完整 Claude Artifacts 替代。**与 Teable 无关。** |
 | 团队规模 | 1–2 名工程师 |
 | MVP 工期 | **6–8 人周**（诚实估计，含 Skill 手工评测） |
@@ -245,7 +245,7 @@ htmlark unpublish --id art_…
 | D19 | **`GET /a/:id` = `buildViewerShell({title, version, renderUrl})` 生成的独立 HTML**（inline CSS/JS + iframe `/render`），**不是** Vite gallery SPA。Gallery 留在 loopback `/`。`/render/:id/:version` = CSP 沙箱文档。本地与 Worker 调同一函数。Slack 贴 `/a/:id`。无 `?v=` 表示 head。 | LAN 403 `/` 与 `/assets`；若 `/a` 是 SPA 路由，J3 必挂。 |
 | D20 | **`--json` opt-in；skill 强制带。** TTY 默认人话。人类可以 `--json --force`；MCP 无 force。 | 结束「默认到底是不是 JSON」的自相矛盾。 |
 | D21 | **分享 URL 就是 `/a/:id`（unlisted id）。没有单独的 `shareId`。** | Teable 有 `shareId` 是因为同一产物要轮换链接；htmlark MVP 用 revoke=disable。rotate URL 等于换 id，不做。 |
-| D22 | **产品名 `htmlark`。** CLI `htmlark`；npm `@htmlark/runtime` `@htmlark/core`（`apps/cli` 是二进制，不是第三套领域包）；skill `htmlark-authoring`；bridge `source: 'htmlark-runtime'`；token 属性 `data-htmlark-tokens` / `--htmlark-*`；家目录 `$HTMLARK_HOME` 默认 `~/.htmlark`。id 前缀 `art_`。域名候选 `htmlark.dev` / `.app` / `.com`，**注册前必须确认**；被占则 fallback `stillbox` 或 `relicary`。 | `locus.dev` / `locus.io` 已被占用。 |
+| D22 | **产品名 `htmlark`。** CLI `htmlark`；npm `@htmlark/runtime` `@htmlark/core`（`apps/cli` 是二进制，不是第三套领域包）；skill `htmlark-authoring`；bridge `source: 'htmlark-runtime'`；token 属性 `data-htmlark-tokens` / `--htmlark-*`；家目录 `$HTMLARK_HOME` 默认 `~/.htmlark`。id 前缀 `art_`。**规范域名 `htmlark.com`（已持有）。** 不双品牌。 | 2026-09-03 用户确认已购 `htmlark.com`。 |
 | D23 | **许可 MIT。** PR-01 加入 `LICENSE`。 | 用户拍板。利于任意 agent / 工具链使用。 |
 | D24 | **无官方托管。** v1 = 用户 self-host 的 **单向 publish**（Worker 参考 + `remote init`）。不做 htmlark.com 多租户。 | 一键可分享 URL 因此不是零配置；这是定位取舍。 |
 | D25 | **Teable 只是先验，不是路线图。** 不计划、不排期、不承诺被 Teable 嵌入。 | 用户：「和 teable 无关，这是我的个人项目」。 |
@@ -722,7 +722,7 @@ JSON API 的 `hash` 永远是 `sha256:` + 64 位小写 hex。SQLite `blob_hash` 
 }
 ```
 
-`$schema` 用 **仓内相对路径** `./schema/recipe-v0.json`。在 registrar 确认 `htmlark.dev` 之前，不把绝对域名写进 schema。
+`$schema` 继续用仓内相对路径 `./schema/recipe-v0.json`。公开 origin 是 `https://htmlark.com`；v1 才把绝对 `$id` 写成 `https://htmlark.com/schema/recipe-v0.json`。
 
 **v1：** 加 `id`、`fragments[]`、`watch`。合成：tokens.css → fragments 数组序。Agent 改 fragment 不是整页——**只在 v1 skill 教**。
 
@@ -1179,7 +1179,7 @@ CSP `report-uri /v1/csp-report` 本地只计数。
 ## Rollout Plan
 
 1. 作者自己的 Claude Code / Codex。
-2. MVP 开源 + **GitHub Releases `bun compile` 二进制** + Homebrew tap（**先确认 htmlark.dev / GitHub 名**）。npm 仅可选 launcher，或要求已装 Bun。**禁止把 `npx` 写成唯一入口。** 无 Desktop、无官方云、无 LAN。
+2. MVP 开源 + **GitHub Releases `bun compile` 二进制** + Homebrew tap（GitHub 名另定；规范域已是 `htmlark.com`）。npm 仅可选 launcher，或要求已装 Bun。**禁止把 `npx` 写成唯一入口。** 无 Desktop、无官方云、无 LAN。
 3. v1：Worker 模板 + sync（self-host only）。Desktop 明确 v2。
 4. `config.json experimental.*`
 5. Rollback：runtime semver pin；schema 只追加。
@@ -1216,7 +1216,7 @@ CSP `report-uri /v1/csp-report` 本地只计数。
 
 产品分叉已关闭（D16 TS+Bun、D22–D25 名/MIT/无托管/Teable、D26–D33 loopback/CAS/JSON path/D1/快照/vendor GET/shell 转义）。
 
-**唯一操作提醒：** 买域 / 建 GitHub org / 发二进制 **之前**，于 registrar 确认 `htmlark.dev`、`htmlark.app`、`htmlark.com`。npm 不是唯一入口。2026-09-01 DNS 探测为 NXDOMAIN，**不是购买保证**。若被占：改用 `stillbox` 或 `relicary`，全局替换。不双品牌并行。
+**域名已关闭：** `htmlark.com` 已持有。DNS / Worker 落点见 [docs/dns-and-remote.md](./docs/dns-and-remote.md)。建 GitHub org、发二进制、npm `@htmlark/*` 仍可后置；不双品牌。
 
 ---
 
