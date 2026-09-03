@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { Database } from "bun:sqlite";
 import { sha256Hex } from "@htmlark/core";
+import { Sqlite } from "./sqlite.ts";
 
 export type DoctorReport = {
   ok: boolean;
@@ -34,7 +34,7 @@ export async function doctorHome(home: string): Promise<DoctorReport> {
   const referenced = new Set<string>();
   let integrity = "ok";
   if (existsSync(dbPath)) {
-    const db = new Database(dbPath, { strict: true });
+    const db = new Sqlite(dbPath);
     try {
       const row = db.query("PRAGMA integrity_check").get() as { integrity_check?: string } | string | null;
       integrity = typeof row === "string" ? row : row?.integrity_check ?? "ok";

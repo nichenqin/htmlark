@@ -1,5 +1,5 @@
-#!/usr/bin/env bun
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+#!/usr/bin/env node
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { defineCommand, runMain } from "citty";
 import {
@@ -21,9 +21,11 @@ import { prefetchFromContent, vendorGet } from "./adapters/vendor-cache.ts";
 import { COMMAND_CATALOG } from "./catalog.ts";
 import { openStore, printJson } from "./context.ts";
 import { doctorHome } from "./doctor.ts";
+import { SKILL_MD } from "./embedded.ts";
 import { htmlarkHome } from "./home.ts";
 import { runMcp } from "./mcp.ts";
 import { HttpPublisher, getRemote, saveRemote, writeRemoteScaffold } from "./remotes.ts";
+import { HTMLARK_VERSION, htmlarkSpawn } from "./self.ts";
 import { ensureServer, startServer } from "./serve.ts";
 
 function fail(err: unknown, json: boolean): never {
@@ -257,11 +259,10 @@ const setup = defineCommand({
     const home = htmlarkHome();
     const destDir = join(home, "skills", "htmlark-authoring");
     mkdirSync(destDir, { recursive: true });
-    const src = new URL("../../../skills/htmlark-authoring/SKILL.md", import.meta.url).pathname;
     const dest = join(destDir, "SKILL.md");
-    copyFileSync(src, dest);
-    const main = new URL("./main.ts", import.meta.url).pathname;
-    const mcp = { mcpServers: { htmlark: { command: process.execPath, args: [main, "mcp"] } } };
+    writeFileSync(dest, SKILL_MD);
+    const spawn = htmlarkSpawn(["mcp"]);
+    const mcp = { mcpServers: { htmlark: { command: spawn.command, args: spawn.args } } };
     printJson({ ok: true, skill: dest, mcp }, Boolean(args.json), `Skill: ${dest}\n${JSON.stringify(mcp, null, 2)}`);
   },
 });
@@ -453,9 +454,15 @@ const undelete = defineCommand({
     }
   },
 });
+const versionCmd = defineCommand({
+  meta: { name: "version", description: "Print htmlark version" },
+  run() {
+    process.stdout.write(`${HTMLARK_VERSION}\n`);
+  },
+});
 
 const main = defineCommand({
-  meta: { name: "htmlark", description: "Local-first artifact runtime" },
+  meta: { name: "htmlark", description: "Local-first artifact runtime", version: HTMLARK_VERSION },
   subCommands: {
     put,
     get,
@@ -477,6 +484,7 @@ const main = defineCommand({
     remote,
     publish: publishCmd,
     unpublish: unpublishCmd,
+    version: versionCmd,
   },
 });
 

@@ -1,11 +1,14 @@
-import { createServer } from "node:http";
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { createServer } from "node:http";
 import { join } from "node:path";
-import { createLocalApp } from "@htmlark/http";
+import { setTimeout as sleep } from "node:timers/promises";
 import type { ArtifactRepository, ProjectArtifactRegistry } from "@htmlark/core";
+import { createLocalApp } from "@htmlark/http";
 import { SqliteCasRepository } from "./adapters/sqlite-cas.ts";
 import { prefetchVendors, vendorGet } from "./adapters/vendor-cache.ts";
 import { defaultBind, defaultPort, htmlarkHome } from "./home.ts";
+import { htmlarkSpawn } from "./self.ts";
 
 export function tokenPath(home: string): string {
   return join(home, "session.token");
@@ -95,16 +98,15 @@ export async function ensureServer(opts: {
   } catch {
     /* not running */
   }
-  const main = new URL("./main.ts", import.meta.url).pathname;
-  const child = Bun.spawn([process.execPath, main, "serve", "--port", String(port), "--bind", bind], {
-    stdout: "ignore",
-    stderr: "ignore",
-    stdin: "ignore",
+  const { command, args } = htmlarkSpawn(["serve", "--port", String(port), "--bind", bind]);
+  const child = spawn(command, args, {
+    detached: true,
+    stdio: "ignore",
     env: { ...process.env, HTMLARK_HOME: home },
   });
   child.unref();
   for (let i = 0; i < 40; i++) {
-    await Bun.sleep(50);
+    await sleep(50);
     try {
       const r = await fetch(`${url}/health`);
       if (r.ok) return { url, token: loadOrCreateToken(home) };

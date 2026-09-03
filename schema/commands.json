@@ -195,6 +195,10 @@
           "summary": "new local key"
         }
       ]
+    },
+    {
+      "name": "version",
+      "summary": "Print htmlark version."
     }
   ]
 }

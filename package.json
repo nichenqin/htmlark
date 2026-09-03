@@ -8,6 +8,7 @@
     "test": "bun test",
     "test:e2e": "playwright test",
     "build:web": "bun run --cwd apps/web build",
+    "build:release": "bun scripts/build-release.ts",
     "htmlark": "bun run apps/cli/src/main.ts"
   },
   "devDependencies": {

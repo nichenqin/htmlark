@@ -1,7 +1,7 @@
-import { Database } from "bun:sqlite";
 import { mkdirSync, openSync, closeSync, fsyncSync, writeSync, renameSync, chmodSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { HtmlarkError, type AppendRecord, type ArtifactHead, type ArtifactRepository, type CreateRecord, type ListPage, type ListQuery, type ShareState, type VersionRecord } from "@htmlark/core";
+import { Sqlite } from "../sqlite.ts";
 
 function writeCas(root: string, hash: string, content: string): void {
   const dir = join(root, "blobs", "sha256", hash.slice(0, 2));
@@ -51,10 +51,10 @@ function rowHead(r: Record<string, unknown>, tags: string[]): ArtifactHead {
 }
 
 export class SqliteCasRepository implements ArtifactRepository {
-  private readonly db: Database;
+  private readonly db: Sqlite;
   constructor(private readonly home: string) {
     mkdirSync(home, { recursive: true });
-    this.db = new Database(join(home, "index.sqlite"), { create: true, strict: true });
+    this.db = new Sqlite(join(home, "index.sqlite"));
     this.db.exec("PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON;");
     const ver = this.db.query("PRAGMA user_version").get() as { user_version: number };
     if (ver.user_version === 0) {

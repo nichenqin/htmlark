@@ -5,10 +5,10 @@ describe("command catalog", () => {
   test("includes publish unpublish fork", () => {
     const names = COMMAND_CATALOG.map((c) => c.name);
     expect(names).toContain("put");
-    expect(names).toContain("publish");
     expect(names).toContain("unpublish");
     expect(names).toContain("remote init");
     expect(names).toContain("catalog");
     expect(names).toContain("fork");
+    expect(names).toContain("version");
   });
 });

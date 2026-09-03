@@ -31,4 +31,5 @@ export const COMMAND_CATALOG: CatalogCommand[] = [
   { name: "publish", summary: "Push a version to a remote. One-way.", args: [{ name: "id", required: true, summary: "artifact id" }, { name: "version", summary: "pin this version" }, { name: "follow-latest", summary: "public /a follows head" }, { name: "password", summary: "optional unlock password" }, { name: "source-private", summary: "hide authored source on the public origin" }] },
   { name: "unpublish", summary: "Remove a published artifact from the remote.", args: [{ name: "id", required: true, summary: "artifact id" }] },
   { name: "fork", summary: "Copy a public artifact into a new local id.", args: [{ name: "url", required: true, summary: "public /a/:id URL" }, { name: "key", required: true, summary: "new local key" }] },
+  { name: "version", summary: "Print htmlark version." },
 ];

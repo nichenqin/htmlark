@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HtmlarkError, type ArtifactPublisher } from "@htmlark/core";
+import { REMOTE_SCHEMA_SQL } from "./embedded.ts";
 import { htmlarkHome } from "./home.ts";
 
 export type Remote = { url: string; token: string };
@@ -59,8 +60,7 @@ export class HttpPublisher implements ArtifactPublisher {
 export function writeRemoteScaffold(home = htmlarkHome()): string {
   const dest = join(home, "remote");
   mkdirSync(dest, { recursive: true });
-  const schemaSrc = new URL("../../remote/schema.sql", import.meta.url);
-  writeFileSync(join(dest, "schema.sql"), readFileSync(schemaSrc));
+  writeFileSync(join(dest, "schema.sql"), REMOTE_SCHEMA_SQL);
   writeFileSync(
     join(dest, "README.md"),
     `# htmlark remote
