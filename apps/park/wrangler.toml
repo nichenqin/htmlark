@@ -1,0 +1,12 @@
+name = "htmlark-park"
+main = "src/index.ts"
+compatibility_date = "2026-09-03"
+account_id = "c7aabbf4ff9f13a34351cb7cf2d015d1"
+
+[[routes]]
+pattern = "htmlark.com"
+custom_domain = true
+
+[[routes]]
+pattern = "www.htmlark.com"
+custom_domain = true
