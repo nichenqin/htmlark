@@ -1,0 +1,12 @@
+name = "htmlark-downloads"
+main = "src/index.ts"
+compatibility_date = "2026-09-03"
+account_id = "c7aabbf4ff9f13a34351cb7cf2d015d1"
+
+[[r2_buckets]]
+binding = "DOWNLOADS"
+bucket_name = "htmlark-downloads"
+
+[[routes]]
+pattern = "dl.htmlark.com"
+custom_domain = true
