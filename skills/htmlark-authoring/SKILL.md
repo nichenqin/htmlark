@@ -12,7 +12,7 @@ Always:
 3. No CDN. Pin scripts as `/vendor/pkg@x.y.z/file.js` (exact semver).
 4. On `code=CONFLICT`, get the artifact, re-apply, retry with `--base-version`.
 5. Do not use `--force` or `import`. If `errors[]` is present, fix the HTML and put again.
-6. Do not tell the user to send a loopback URL to colleagues. Export a file instead.
+6. Do not send a loopback `127.0.0.1` URL. Share with `htmlark export` or `htmlark publish --id … --json`.
 
 ```
 htmlark put --key q3-sales --file ./q3.html --name "Q3 Sales" --json

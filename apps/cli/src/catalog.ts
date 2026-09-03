@@ -27,7 +27,8 @@ export const COMMAND_CATALOG: CatalogCommand[] = [
   { name: "doctor", summary: "Integrity, missing blobs, orphans." },
   { name: "mcp", summary: "stdio MCP. No force." },
   { name: "catalog", summary: "Print the command catalog JSON." },
-  { name: "remote init", summary: "Write remotes.json for one-way publish." },
-  { name: "publish", summary: "Push a version to a remote. One-way.", args: [{ name: "id", required: true, summary: "artifact id" }] },
+  { name: "remote init", summary: "Write remotes.json and scaffold a Cloudflare Worker." },
+  { name: "publish", summary: "Push a version to a remote. One-way.", args: [{ name: "id", required: true, summary: "artifact id" }, { name: "version", summary: "pin this version" }, { name: "follow-latest", summary: "public /a follows head" }, { name: "password", summary: "optional unlock password" }, { name: "source-private", summary: "hide authored source on the public origin" }] },
   { name: "unpublish", summary: "Remove a published artifact from the remote.", args: [{ name: "id", required: true, summary: "artifact id" }] },
+  { name: "fork", summary: "Copy a public artifact into a new local id.", args: [{ name: "url", required: true, summary: "public /a/:id URL" }, { name: "key", required: true, summary: "new local key" }] },
 ];

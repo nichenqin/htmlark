@@ -225,24 +225,34 @@ export async function importArtifact(
 export async function publishArtifact(
   repo: ArtifactRepository,
   publisher: ArtifactPublisher,
-  opts: { id: string; version?: number; followLatest?: boolean; vendors?: Record<string, string> },
+  opts: {
+    id: string;
+    version?: number;
+    followLatest?: boolean;
+    vendors?: Record<string, string>;
+    sourcePublic?: boolean;
+    passwordHash?: string | null;
+  },
 ): Promise<Record<string, unknown>> {
   const head = await repo.getArtifact(opts.id);
   const version = opts.version ?? head.headVersion;
   const ver = await repo.readVersion(opts.id, version);
   if (ver.dirty) throw new HtmlarkError("DIRTY", "cannot publish dirty version", { id: opts.id, version });
+  const followLatest = opts.followLatest ?? opts.version == null;
   const published = await publisher.publish({
     id: opts.id,
     version,
     name: ver.name,
     type: ver.type,
     content: ver.content,
-    followLatest: opts.followLatest ?? opts.version == null,
+    followLatest,
     dirty: ver.dirty,
     vendorSpecs: ver.vendorSpecs,
     vendors: opts.vendors ?? {},
+    sourcePublic: opts.sourcePublic !== false,
+    passwordHash: opts.passwordHash ?? null,
   });
-  return { ok: true, id: published.id, url: published.url, version, followLatest: opts.followLatest ?? opts.version == null };
+  return { ok: true, id: published.id, url: published.url, version, followLatest, sourcePublic: opts.sourcePublic !== false };
 }
 
 export async function unpublishArtifact(publisher: ArtifactPublisher, id: string): Promise<Record<string, unknown>> {

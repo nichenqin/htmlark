@@ -103,6 +103,8 @@ export interface ArtifactPublisher {
     dirty: boolean;
     vendorSpecs: string[];
     vendors: Record<string, string>;
+    sourcePublic: boolean;
+    passwordHash: string | null;
   }): Promise<{ id: string; url: string }>;
   unpublish(id: string): Promise<void>;
 }

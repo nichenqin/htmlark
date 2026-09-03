@@ -23,6 +23,7 @@ export function renderViewer(input: {
   dirty?: boolean;
   followHead?: boolean;
   id?: string;
+  sourcePublic?: boolean;
 }): { body: string; contentType: string; csp: string } {
   const title = escapeHtml(input.title);
   const renderUrl = new URL(input.renderUrl, "http://127.0.0.1").pathname + new URL(input.renderUrl, "http://127.0.0.1").search;
@@ -70,7 +71,7 @@ export function renderViewer(input: {
         : `<iframe sandbox="${HTMLARK_SANDBOX_CAPABILITIES}" src="${escapeHtml(renderUrl)}"></iframe>`
     }
   </div>
-  <pre id="source" class="panel">Loading source…</pre>
+  <pre id="source" class="panel">${input.sourcePublic === false ? "Source is private." : "Loading source…"}</pre>
   <pre id="versions" class="panel">Loading versions…</pre>
   <pre id="diff" class="panel">Loading diff…</pre>
   <script>

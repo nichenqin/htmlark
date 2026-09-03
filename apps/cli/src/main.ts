@@ -13,16 +13,17 @@ import {
   publishArtifact,
   putArtifact,
   restoreArtifact,
+  sha256Hex,
   unpublishArtifact,
 } from "@htmlark/core";
 import { inspectArtifact } from "@htmlark/runtime";
-import { prefetchFromContent } from "./adapters/vendor-cache.ts";
+import { prefetchFromContent, vendorGet } from "./adapters/vendor-cache.ts";
 import { COMMAND_CATALOG } from "./catalog.ts";
 import { openStore, printJson } from "./context.ts";
 import { doctorHome } from "./doctor.ts";
 import { htmlarkHome } from "./home.ts";
 import { runMcp } from "./mcp.ts";
-import { HttpPublisher, getRemote, saveRemote } from "./remotes.ts";
+import { HttpPublisher, getRemote, saveRemote, writeRemoteScaffold } from "./remotes.ts";
 import { ensureServer, startServer } from "./serve.ts";
 
 function fail(err: unknown, json: boolean): never {
@@ -337,8 +338,10 @@ const remote = defineCommand({
       run({ args }) {
         const token = Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString("hex");
         const url = String(args.url);
+        const home = htmlarkHome();
         saveRemote("origin", { url, token });
-        printJson({ ok: true, name: "origin", url }, Boolean(args.json), `origin ${url}\ntoken written to remotes.json`);
+        const scaffold = writeRemoteScaffold(home);
+        printJson({ ok: true, name: "origin", url, scaffold }, Boolean(args.json), `origin ${url}\nscaffold ${scaffold}\ntoken written to remotes.json`);
       },
     }),
   },
@@ -351,16 +354,29 @@ const publishCmd = defineCommand({
     remote: { type: "string", default: "origin" },
     version: { type: "string" },
     "follow-latest": { type: "boolean", default: false },
+    password: { type: "string" },
+    "source-private": { type: "boolean", default: false },
     json: { type: "boolean", default: false },
   },
   async run({ args }) {
     try {
-      const { repo } = openStore();
+      const { home, repo } = openStore();
       const remoteCfg = getRemote(String(args.remote));
+      const id = args.id as string;
+      const version = args.version ? Number(args.version) : undefined;
+      const ver = await repo.readVersion(id, version ?? (await repo.getArtifact(id)).headVersion);
+      const vendors: Record<string, string> = {};
+      for (const spec of ver.vendorSpecs) {
+        const bytes = vendorGet(home, spec);
+        if (bytes) vendors[spec] = Buffer.from(bytes).toString("base64");
+      }
       const result = await publishArtifact(repo, new HttpPublisher(remoteCfg), {
-        id: args.id as string,
-        version: args.version ? Number(args.version) : undefined,
+        id,
+        version,
         followLatest: Boolean(args["follow-latest"]) || !args.version,
+        vendors,
+        sourcePublic: !args["source-private"],
+        passwordHash: args.password ? await sha256Hex(String(args.password)) : null,
       });
       printJson(result, Boolean(args.json), String(result["url"] ?? "published"));
     } catch (err) {
@@ -380,6 +396,41 @@ const unpublishCmd = defineCommand({
     try {
       const result = await unpublishArtifact(new HttpPublisher(getRemote(String(args.remote))), args.id as string);
       printJson(result, Boolean(args.json), "unpublished");
+    } catch (err) {
+      fail(err, Boolean(args.json));
+    }
+  },
+});
+
+const forkCmd = defineCommand({
+  meta: { name: "fork", description: "Copy a public artifact into a new local id" },
+  args: {
+    url: { type: "string", required: true },
+    key: { type: "string", required: true },
+    json: { type: "boolean", default: false },
+  },
+  async run({ args }) {
+    try {
+      const { repo, registry, projectRoot } = openStore();
+      const page = new URL(String(args.url));
+      const found = String(args.url).match(/art_[0-9A-HJKMNP-TV-Z]{22}/);
+      const id = found?.[0];
+      if (!id) throw new HtmlarkError("VALIDATION", "url missing artifact id");
+      const metaRes = await fetch(new URL(`/v1/artifacts/${id}`, page.origin));
+      const meta = (await metaRes.json()) as { artifact?: { version?: number }; preview?: string; error?: string };
+      if (!metaRes.ok) throw new HtmlarkError("NOT_FOUND", meta.error ?? "fork source missing", { id });
+      const version = meta.artifact?.version ?? 1;
+      const rawRes = await fetch(new URL(`/v1/artifacts/${id}/versions/${version}/raw`, page.origin));
+      if (!rawRes.ok) throw new HtmlarkError("VALIDATION", "source is private or missing", { id, version });
+      const content = await rawRes.text();
+      const result = await putArtifact(repo, registry, {
+        key: String(args.key),
+        content,
+        name: String(args.key),
+        type: "html",
+        projectRoot,
+      });
+      printJson(result, Boolean(args.json), artifactIdOf(result));
     } catch (err) {
       fail(err, Boolean(args.json));
     }
@@ -412,6 +463,7 @@ const main = defineCommand({
     diff,
     restore,
     undelete,
+    fork: forkCmd,
     open: openCmd,
     serve,
     export: exportCmd,

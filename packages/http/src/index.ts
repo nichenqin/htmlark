@@ -4,5 +4,7 @@ export {
   type PublishAppType,
   type PublishDeps,
   type PublishStore,
-  type PublishedRecord,
+  type PublishedMeta,
+  type PublishedVersion,
 } from "./publish.ts";
+export { MemoryPublishStore } from "./memory-publish-store.ts";

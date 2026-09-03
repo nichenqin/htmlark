@@ -10,6 +10,11 @@ PUBLIC_ORIGIN = "https://a.htmlark.com"
 binding = "ARTIFACTS"
 bucket_name = "htmlark-artifacts"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "htmlark-index"
+database_id = "78f23cac-46bf-45cf-ad5c-64c8215ce76c"
+
 [[routes]]
 pattern = "a.htmlark.com"
 custom_domain = true

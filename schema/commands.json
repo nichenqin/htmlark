@@ -140,7 +140,7 @@
     },
     {
       "name": "remote init",
-      "summary": "Write remotes.json for one-way publish."
+      "summary": "Write remotes.json and scaffold a Cloudflare Worker."
     },
     {
       "name": "publish",
@@ -150,6 +150,22 @@
           "name": "id",
           "required": true,
           "summary": "artifact id"
+        },
+        {
+          "name": "version",
+          "summary": "pin this version"
+        },
+        {
+          "name": "follow-latest",
+          "summary": "public /a follows head"
+        },
+        {
+          "name": "password",
+          "summary": "optional unlock password"
+        },
+        {
+          "name": "source-private",
+          "summary": "hide authored source on the public origin"
         }
       ]
     },
@@ -161,6 +177,22 @@
           "name": "id",
           "required": true,
           "summary": "artifact id"
+        }
+      ]
+    },
+    {
+      "name": "fork",
+      "summary": "Copy a public artifact into a new local id.",
+      "args": [
+        {
+          "name": "url",
+          "required": true,
+          "summary": "public /a/:id URL"
+        },
+        {
+          "name": "key",
+          "required": true,
+          "summary": "new local key"
         }
       ]
     }

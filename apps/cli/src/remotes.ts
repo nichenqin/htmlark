@@ -55,3 +55,27 @@ export class HttpPublisher implements ArtifactPublisher {
     if (!res.ok) throw new HtmlarkError("VALIDATION", "unpublish failed", { id, status: res.status });
   }
 }
+
+export function writeRemoteScaffold(home = htmlarkHome()): string {
+  const dest = join(home, "remote");
+  mkdirSync(dest, { recursive: true });
+  const schemaSrc = new URL("../../remote/schema.sql", import.meta.url);
+  writeFileSync(join(dest, "schema.sql"), readFileSync(schemaSrc));
+  writeFileSync(
+    join(dest, "README.md"),
+    `# htmlark remote
+
+From the htmlark checkout:
+
+    wrangler d1 create htmlark-index
+    wrangler d1 execute htmlark-index --file schema.sql --remote
+    wrangler r2 bucket create htmlark-artifacts
+    wrangler secret put PUBLISH_TOKEN
+    wrangler deploy
+
+Point remotes.json origin.url at the Worker origin (https://a.example.com).
+GET /a/:id is public. POST /v1/publish requires Bearer PUBLISH_TOKEN.
+`,
+  );
+  return dest;
+}

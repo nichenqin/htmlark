@@ -2,9 +2,9 @@
 
 Local-first runtime for AI-generated HTML/Markdown artifacts.
 
-Canonical site: **[htmlark.com](https://htmlark.com)** (domain held; public Worker not deployed yet). Personal project, independent of Teable. CLI is the source of truth; loopback web is a viewer; cloud is a later remote.
+Canonical site: **[htmlark.com](https://htmlark.com)**. Public artifacts: **[a.htmlark.com](https://a.htmlark.com)**. Personal project, independent of Teable. CLI is the source of truth.
 
-DNS / Worker landing: [docs/dns-and-remote.md](./docs/dns-and-remote.md).
+DNS / Worker: [docs/dns-and-remote.md](./docs/dns-and-remote.md).
 
 ## Install / run
 
@@ -15,36 +15,30 @@ bun run typecheck
 
 bun apps/cli/src/main.ts setup --json
 bun apps/cli/src/main.ts put --file ./page.html --key demo --json
-bun apps/cli/src/main.ts serve          # 127.0.0.1:7420
-bun apps/cli/src/main.ts open --id art_…
+bun apps/cli/src/main.ts serve
+bun apps/cli/src/main.ts remote init --json
+bun apps/cli/src/main.ts publish --id art_… --json
 bun apps/cli/src/main.ts doctor --json
 ```
 
-Store: `$HTMLARK_HOME` or `~/.htmlark` (sqlite + CAS blobs). Not NFS / iCloud / Dropbox.
+Store: `$HTMLARK_HOME` or `~/.htmlark`. Not NFS / iCloud / Dropbox.
 
 ## Agent contract
 
-Always `--json` and `--key`. No CDN: pin `/vendor/pkg@x.y.z/file.js`. On `code=CONFLICT`, get, re-apply, retry with `--base-version`. Do not `--force`. Do not share loopback URLs.
+Always `--json` and `--key`. No CDN. On `code=CONFLICT`, get, re-apply, retry with `--base-version`. Do not `--force`. Do not share loopback URLs. Public share is `htmlark publish`.
 
-Skill: `skills/htmlark-authoring/SKILL.md` (also copied by `htmlark setup`).
+## Security
 
-MCP: `bun apps/cli/src/main.ts mcp` (stdio, no `force`).
-
-## Security model
-
-Loopback is not "you own the machine". Host allowlist, JSON + `X-Htmlark-Token` on mutations, no CORS. `/render` is CSP-sandboxed. Dirty versions 409 on `/render` and are not executed.
-
-## Non-goals (MVP)
-
-Desktop, cloud publish, LAN, visual diff, URL import, FTS, SaaS MCP.
+Loopback Host allowlist, JSON + `X-Htmlark-Token` on mutations, no CORS. `/render` is CSP-sandboxed. Dirty versions 409. Optional publish password. `--source-private` hides authored source on the public origin.
 
 ## Layout
 
-- `packages/core` — commands + ports
-- `packages/runtime` — wrap / CSP / inspect (Worker-safe)
-- `packages/http` — `createLocalApp`
-- `apps/cli` — citty, sqlite+CAS, vendor prefetch, MCP
-- `apps/web` — Svelte 5 gallery
-- `schema/recipe-v0.json`
+- `packages/core` commands + ports
+- `packages/runtime` wrap / CSP / inspect
+- `packages/http` `createLocalApp` / `createPublishApp`
+- `apps/cli` citty, sqlite+CAS, MCP
+- `apps/remote` Cloudflare Worker D1+R2
+- `apps/web` Svelte gallery
+- `schema/commands.json` CLI catalog
 
 See [PRD.md](./PRD.md).
