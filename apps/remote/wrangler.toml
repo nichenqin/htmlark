@@ -1,0 +1,15 @@
+name = "htmlark-remote"
+main = "src/index.ts"
+compatibility_date = "2026-09-03"
+account_id = "c7aabbf4ff9f13a34351cb7cf2d015d1"
+
+[vars]
+PUBLIC_ORIGIN = "https://a.htmlark.com"
+
+[[r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "htmlark-artifacts"
+
+[[routes]]
+pattern = "a.htmlark.com"
+custom_domain = true

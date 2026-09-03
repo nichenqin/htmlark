@@ -32,11 +32,14 @@ export type {
 } from "./types.ts";
 export { MemoryRepository } from "./repo/memory.ts";
 export { MemoryProjectArtifactRegistry } from "./registry/memory.ts";
+export { MemoryPublisher } from "./publisher/memory.ts";
 export {
   diffArtifacts,
   getArtifactCommand,
   importArtifact,
   listArtifacts,
+  publishArtifact,
   putArtifact,
   restoreArtifact,
+  unpublishArtifact,
 } from "./commands.ts";

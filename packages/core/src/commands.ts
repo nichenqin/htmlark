@@ -4,7 +4,7 @@ import { unifiedDiff } from "./diff.ts";
 import { HtmlarkError } from "./errors.ts";
 import { hashJson, sha256Hex } from "./hash.ts";
 import { generateId, isArtifactId } from "./id.ts";
-import type { ArtifactRepository, ProjectArtifactRegistry } from "./types.ts";
+import type { ArtifactPublisher, ArtifactRepository, ProjectArtifactRegistry } from "./types.ts";
 import { PutOptsSchema, type DiffOpts, type GetOpts, type ImportOpts, type ListOpts, type RestoreOpts } from "./schemas.ts";
 function provenance(opts: { agent?: string; model?: string }): Record<string, unknown> {
   return {
@@ -220,4 +220,32 @@ export async function importArtifact(
     force: true,
     projectRoot: opts.projectRoot,
   });
+}
+
+export async function publishArtifact(
+  repo: ArtifactRepository,
+  publisher: ArtifactPublisher,
+  opts: { id: string; version?: number; followLatest?: boolean; vendors?: Record<string, string> },
+): Promise<Record<string, unknown>> {
+  const head = await repo.getArtifact(opts.id);
+  const version = opts.version ?? head.headVersion;
+  const ver = await repo.readVersion(opts.id, version);
+  if (ver.dirty) throw new HtmlarkError("DIRTY", "cannot publish dirty version", { id: opts.id, version });
+  const published = await publisher.publish({
+    id: opts.id,
+    version,
+    name: ver.name,
+    type: ver.type,
+    content: ver.content,
+    followLatest: opts.followLatest ?? opts.version == null,
+    dirty: ver.dirty,
+    vendorSpecs: ver.vendorSpecs,
+    vendors: opts.vendors ?? {},
+  });
+  return { ok: true, id: published.id, url: published.url, version, followLatest: opts.followLatest ?? opts.version == null };
+}
+
+export async function unpublishArtifact(publisher: ArtifactPublisher, id: string): Promise<Record<string, unknown>> {
+  await publisher.unpublish(id);
+  return { ok: true, id };
 }

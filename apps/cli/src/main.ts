@@ -10,15 +10,19 @@ import {
   getArtifactCommand,
   importArtifact,
   listArtifacts,
+  publishArtifact,
   putArtifact,
   restoreArtifact,
+  unpublishArtifact,
 } from "@htmlark/core";
 import { inspectArtifact } from "@htmlark/runtime";
 import { prefetchFromContent } from "./adapters/vendor-cache.ts";
+import { COMMAND_CATALOG } from "./catalog.ts";
 import { openStore, printJson } from "./context.ts";
 import { doctorHome } from "./doctor.ts";
 import { htmlarkHome } from "./home.ts";
 import { runMcp } from "./mcp.ts";
+import { HttpPublisher, getRemote, saveRemote } from "./remotes.ts";
 import { ensureServer, startServer } from "./serve.ts";
 
 function fail(err: unknown, json: boolean): never {
@@ -315,6 +319,73 @@ const mcp = defineCommand({
   },
 });
 
+const catalog = defineCommand({
+  meta: { name: "catalog", description: "Print command catalog JSON" },
+  run() {
+    printJson({ ok: true, commands: COMMAND_CATALOG }, true, "");
+  },
+});
+
+const remote = defineCommand({
+  meta: { name: "remote" },
+  subCommands: {
+    init: defineCommand({
+      args: {
+        url: { type: "string", default: "https://a.htmlark.com" },
+        json: { type: "boolean", default: false },
+      },
+      run({ args }) {
+        const token = Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString("hex");
+        const url = String(args.url);
+        saveRemote("origin", { url, token });
+        printJson({ ok: true, name: "origin", url }, Boolean(args.json), `origin ${url}\ntoken written to remotes.json`);
+      },
+    }),
+  },
+});
+
+const publishCmd = defineCommand({
+  meta: { name: "publish", description: "Push a version to a remote" },
+  args: {
+    id: { type: "string", required: true },
+    remote: { type: "string", default: "origin" },
+    version: { type: "string" },
+    "follow-latest": { type: "boolean", default: false },
+    json: { type: "boolean", default: false },
+  },
+  async run({ args }) {
+    try {
+      const { repo } = openStore();
+      const remoteCfg = getRemote(String(args.remote));
+      const result = await publishArtifact(repo, new HttpPublisher(remoteCfg), {
+        id: args.id as string,
+        version: args.version ? Number(args.version) : undefined,
+        followLatest: Boolean(args["follow-latest"]) || !args.version,
+      });
+      printJson(result, Boolean(args.json), String(result["url"] ?? "published"));
+    } catch (err) {
+      fail(err, Boolean(args.json));
+    }
+  },
+});
+
+const unpublishCmd = defineCommand({
+  meta: { name: "unpublish", description: "Remove a published artifact" },
+  args: {
+    id: { type: "string", required: true },
+    remote: { type: "string", default: "origin" },
+    json: { type: "boolean", default: false },
+  },
+  async run({ args }) {
+    try {
+      const result = await unpublishArtifact(new HttpPublisher(getRemote(String(args.remote))), args.id as string);
+      printJson(result, Boolean(args.json), "unpublished");
+    } catch (err) {
+      fail(err, Boolean(args.json));
+    }
+  },
+});
+
 const undelete = defineCommand({
   meta: { name: "undelete", description: "Clear deleted_at" },
   args: {
@@ -350,6 +421,10 @@ const main = defineCommand({
     recipe,
     doctor,
     mcp,
+    catalog,
+    remote,
+    publish: publishCmd,
+    unpublish: unpublishCmd,
   },
 });
 

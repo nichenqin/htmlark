@@ -100,6 +100,9 @@ export interface ArtifactPublisher {
     type: ArtifactType;
     content: string;
     followLatest: boolean;
+    dirty: boolean;
+    vendorSpecs: string[];
+    vendors: Record<string, string>;
   }): Promise<{ id: string; url: string }>;
   unpublish(id: string): Promise<void>;
 }
