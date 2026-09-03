@@ -1,0 +1,13 @@
+{
+  "name": "@htmlark/http",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@htmlark/core": "workspace:*",
+    "@htmlark/runtime": "workspace:*",
+    "hono": "^4.9.6"
+  }
+}

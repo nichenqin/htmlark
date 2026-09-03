@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./schema/recipe-v0.json",
+  "title": "htmlark recipe v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "title", "format"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 0 },
+    "title": { "type": "string", "minLength": 1 },
+    "format": { "enum": ["html", "markdown"] },
+    "tokens": { "enum": ["default"] },
+    "quality": { "enum": ["strict", "off"] }
+  }
+}

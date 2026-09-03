@@ -1,0 +1,11 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.htmlark/
+*.bun-build
+.DS_Store
+.env
+.env.*
+apps/web/dist/
+*.log

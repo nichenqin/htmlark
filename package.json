@@ -1,0 +1,25 @@
+{
+  "name": "htmlark",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && bun run --cwd apps/web check",
+    "test": "bun test",
+    "test:e2e": "playwright test",
+    "build:web": "bun run --cwd apps/web build",
+    "htmlark": "bun run apps/cli/src/main.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/bun": "^1.4.0",
+    "svelte-check": "^4.7.6",
+    "typescript": "7"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "citty": "^0.2.2",
+    "hono": "^4.13.5",
+    "zod": "^4.5.4"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "paths": {
+      "@htmlark/core": ["./packages/core/src/index.ts"],
+      "@htmlark/runtime": ["./packages/runtime/src/index.ts"],
+      "@htmlark/http": ["./packages/http/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "apps/cli/src/**/*.ts", "tests/**/*.test.ts"]
+}

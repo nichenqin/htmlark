@@ -1,0 +1,15 @@
+{
+  "name": "@htmlark/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "htmlark": "./src/main.ts"
+  },
+  "dependencies": {
+    "@htmlark/core": "workspace:*",
+    "@htmlark/http": "workspace:*",
+    "@htmlark/runtime": "workspace:*",
+    "citty": "^0.1.6",
+    "hono": "^4.9.6"
+  }
+}
