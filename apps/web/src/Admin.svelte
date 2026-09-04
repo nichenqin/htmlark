@@ -18,6 +18,36 @@
   let diffFrom = $state("");
   let key = $state("");
   let importError = $state<string | null>(null);
+  let inspectW = $state(readInspectWidth());
+  let dragging = $state(false);
+  let bodyEl: HTMLDivElement | undefined;
+
+  function readInspectWidth(): number {
+    const n = Number(globalThis.localStorage?.getItem("htmlark-inspect-w"));
+    return Number.isFinite(n) && n >= 280 && n <= 1200 ? n : 420;
+  }
+
+  function persistInspect() {
+    globalThis.localStorage?.setItem("htmlark-inspect-w", String(inspectW));
+  }
+
+  function onSplitDown(e: PointerEvent) {
+    dragging = true;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onSplitMove(e: PointerEvent) {
+    if (!dragging || !bodyEl) return;
+    const box = bodyEl.getBoundingClientRect();
+    const next = box.right - e.clientX;
+    inspectW = Math.round(Math.min(Math.max(next, 280), Math.max(280, box.width - 280)));
+  }
+
+  function onSplitUp() {
+    if (!dragging) return;
+    dragging = false;
+    persistInspect();
+  }
 
   const list = createQuery(() => ({
     queryKey: ["artifacts", search],
@@ -97,7 +127,12 @@
   {#if importError}
     <p class="err">{importError}</p>
   {/if}
-  <div class="body">
+  <div
+    class="body"
+    class:dragging
+    bind:this={bodyEl}
+    style:--inspect="{inspectW}px"
+  >
     <div class="list">
       {#if list.isPending}
         <p class="mute">Loading library</p>
@@ -131,6 +166,21 @@
         </table>
       {/if}
     </div>
+    <div
+      class="split"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize inspector"
+      aria-valuenow={inspectW}
+      onpointerdown={onSplitDown}
+      onpointermove={onSplitMove}
+      onpointerup={onSplitUp}
+      onpointercancel={onSplitUp}
+      ondblclick={() => {
+        inspectW = 420;
+        persistInspect();
+      }}
+    ></div>
     <aside class="inspect">
       {#if !selected}
         <p class="mute pad">Select a page. The inspector shows the sandboxed render, source, and versions.</p>
@@ -254,14 +304,29 @@
   }
   .body {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 420px;
+    grid-template-columns: minmax(240px, 1fr) 6px var(--inspect, 420px);
     min-height: 0;
     flex: 1;
+  }
+  .body.dragging {
+    cursor: col-resize;
+    user-select: none;
+  }
+  .body.dragging iframe {
+    pointer-events: none;
+  }
+  .split {
+    cursor: col-resize;
+    background: #d8dee6;
+    touch-action: none;
+  }
+  .split:hover,
+  .body.dragging .split {
+    background: #2f6fed;
   }
   .list {
     overflow: auto;
     background: #fff;
-    border-right: 1px solid #d8dee6;
   }
   table {
     width: 100%;
