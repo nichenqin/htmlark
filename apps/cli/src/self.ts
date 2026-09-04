@@ -1,6 +1,7 @@
+import { spawn } from "node:child_process";
 import { basename } from "node:path";
 
-export const HTMLARK_VERSION = "0.1.0";
+export const HTMLARK_VERSION = "0.1.1";
 
 export function isStandaloneBinary(): boolean {
   const base = basename(process.execPath).replace(/\.exe$/i, "");
@@ -12,4 +13,14 @@ export function htmlarkSpawn(subcommand: string[]): { command: string; args: str
   const self = process.argv[1];
   if (!self) return { command: process.execPath, args: subcommand };
   return { command: process.execPath, args: [self, ...subcommand] };
+}
+
+export function openUrl(url: string): void {
+  const child =
+    process.platform === "darwin"
+      ? spawn("open", [url], { detached: true, stdio: "ignore" })
+      : process.platform === "win32"
+        ? spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" })
+        : spawn("xdg-open", [url], { detached: true, stdio: "ignore" });
+  child.unref();
 }

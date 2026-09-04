@@ -49,7 +49,9 @@ export async function startServer(opts: {
       return vendorGet(home, spec);
     },
     vendorPrefetch: (specs) => prefetchVendors(home, specs),
-    webRoot: join(import.meta.dir, "../../web/dist"),
+    webRoot: existsSync(join(import.meta.dirname, "../../web/dist/index.html"))
+      ? join(import.meta.dirname, "../../web/dist")
+      : undefined,
   });
   const server = createServer(async (req, res) => {
     const host = req.headers.host ?? `${bind}:${port}`;

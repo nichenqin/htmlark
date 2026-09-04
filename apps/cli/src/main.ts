@@ -25,7 +25,7 @@ import { SKILL_MD } from "./embedded.ts";
 import { htmlarkHome } from "./home.ts";
 import { runMcp } from "./mcp.ts";
 import { HttpPublisher, getRemote, saveRemote, writeRemoteScaffold } from "./remotes.ts";
-import { HTMLARK_VERSION, htmlarkSpawn } from "./self.ts";
+import { HTMLARK_VERSION, htmlarkSpawn, openUrl } from "./self.ts";
 import { ensureServer, startServer } from "./serve.ts";
 
 function fail(err: unknown, json: boolean): never {
@@ -183,7 +183,7 @@ const openCmd = defineCommand({
     const { url } = await ensureServer({ repo, registry, projectRoot });
     const v = args.version ? `?v=${args.version}` : "";
     const target = `${url}/a/${args.id}${v}`;
-    Bun.spawn(["open", target], { stdout: "ignore", stderr: "ignore" });
+    openUrl(target);
     process.stdout.write(`${target}\n`);
   },
 });
