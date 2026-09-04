@@ -10,14 +10,14 @@ Coding agents write HTML that dies in Downloads or a vendor sidebar. The next se
 
 htmlark is the local origin: put under one key, preview in a loopback sandbox, keep every version. Dirty HTML is stored and does not run. It is not a full Claude Artifacts replacement.
 
-Live UI: **[htmlark.com](https://htmlark.com)**. Public pages: **[a.htmlark.com](https://a.htmlark.com)**.
+Site: **[htmlark.com](https://htmlark.com)**. Public pages: **[a.htmlark.com](https://a.htmlark.com)**.
 
 ```mermaid
 flowchart LR
-  put["htmlark put --key"] --> store["$HTMLARK_HOME or ~/.htmlark"]
-  store --> open["htmlark open"]
+  put["put --key"] --> store["~/.htmlark"]
+  store --> open["open"]
   store --> versions["versions"]
-  versions --> publish["optional htmlark publish"]
+  versions --> publish["optional publish"]
 ```
 
 ## Install
