@@ -1,4 +1,4 @@
-import { chmodSync, copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { HTMLARK_VERSION } from "../apps/cli/src/self.ts";
 
@@ -10,6 +10,9 @@ const binDir = join(root, "dist/bin");
 mkdirSync(npmDir, { recursive: true });
 mkdirSync(binDir, { recursive: true });
 
+const web = Bun.spawnSync(["bun", "run", "build:web"], { cwd: root, stdout: "inherit", stderr: "inherit" });
+if (web.exitCode !== 0) process.exit(web.exitCode ?? 1);
+
 const nodeOut = join(npmDir, "htmlark.mjs");
 const nodeBuild = Bun.spawnSync(["bun", "build", entry, "--target", "node", "--outfile", nodeOut, "--minify"], {
   cwd: root,
@@ -20,6 +23,7 @@ if (nodeBuild.exitCode !== 0) process.exit(nodeBuild.exitCode ?? 1);
 const bundled = readFileSync(nodeOut, "utf8").replace(/^(#!.*\n)+/, "");
 writeFileSync(nodeOut, `#!/usr/bin/env node\n${bundled}`);
 chmodSync(nodeOut, 0o755);
+cpSync(join(root, "apps/web/dist"), join(npmDir, "admin"), { recursive: true });
 writeFileSync(
   join(npmDir, "package.json"),
   `${JSON.stringify(
@@ -34,7 +38,7 @@ writeFileSync(
       repository: { type: "git", url: "git+https://github.com/nichenqin/htmlark.git" },
       homepage: "https://htmlark.com",
       bugs: { url: "https://github.com/nichenqin/htmlark/issues" },
-      files: ["htmlark.mjs"],
+      files: ["htmlark.mjs", "admin"],
       publishConfig: { access: "public" },
       keywords: ["html", "artifacts", "cli", "local-first", "agent"],
     },

@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { basename } from "node:path";
 
-export const HTMLARK_VERSION = "0.1.1";
+export const HTMLARK_VERSION = "0.1.2";
 
 export function isStandaloneBinary(): boolean {
   const base = basename(process.execPath).replace(/\.exe$/i, "");

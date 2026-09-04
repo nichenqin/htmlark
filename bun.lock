@@ -31,11 +31,21 @@
         "hono": "^4.9.6",
       },
     },
+    "apps/downloads": {
+      "name": "@htmlark/downloads",
+    },
+    "apps/park": {
+      "name": "@htmlark/park",
+    },
+    "apps/remote": {
+      "name": "@htmlark/remote",
+    },
     "apps/web": {
       "name": "@htmlark/web",
       "version": "0.1.0",
       "dependencies": {
         "@sveltejs/vite-plugin-svelte": "^7.3.0",
+        "@tanstack/svelte-query": "^6.1.48",
         "svelte": "^5.57.0",
         "svelte-check": "^4.7.6",
         "typescript": "5.9",
@@ -69,7 +79,13 @@
 
     "@htmlark/core": ["@htmlark/core@workspace:packages/core"],
 
+    "@htmlark/downloads": ["@htmlark/downloads@workspace:apps/downloads"],
+
     "@htmlark/http": ["@htmlark/http@workspace:packages/http"],
+
+    "@htmlark/park": ["@htmlark/park@workspace:apps/park"],
+
+    "@htmlark/remote": ["@htmlark/remote@workspace:apps/remote"],
 
     "@htmlark/runtime": ["@htmlark/runtime@workspace:packages/runtime"],
 
@@ -130,6 +146,10 @@
     "@sveltejs/load-config": ["@sveltejs/load-config@0.2.3", "", {}, "sha512-VT3qmUb8pRV2QrZjd8iAmtg8lf4W0TIjZbvXtz5MKei/q96teWZgGJyyidJzOjzZzvdq616eSRVeMYIQChUTAQ=="],
 
     "@sveltejs/vite-plugin-svelte": ["@sveltejs/vite-plugin-svelte@7.3.0", "", { "dependencies": { "deepmerge": "^4.3.1", "magic-string": "^1.0.0", "obug": "^2.1.0", "vitefu": "^1.1.2" }, "peerDependencies": { "svelte": "^5.46.4", "vite": "^8.0.0-beta.7 || ^8.0.0" } }, "sha512-QbRoJyD92e9R0ufeQIWRHrCC0ObcqSv/aBDdrQMoU+sypav3cDx5wytdQ6GLdXjEMO6xjrXGzfkUygng8JMv0A=="],
+
+    "@tanstack/query-core": ["@tanstack/query-core@5.102.8", "", {}, "sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg=="],
+
+    "@tanstack/svelte-query": ["@tanstack/svelte-query@6.1.48", "", { "dependencies": { "@tanstack/query-core": "5.102.8" }, "peerDependencies": { "svelte": "^5.25.0" } }, "sha512-X+d2LvUImIf1OQiNIlJ5AfHcXrVwKMMvuC1a/6VZclkgg7Td9mSnvZrbpWowR3TFHrzFY80PHVwm+u8End7c3Q=="],
 
     "@types/bun": ["@types/bun@1.4.0", "", { "dependencies": { "bun-types": "1.4.0" } }, "sha512-K+lZULY23vRgK/CfTjFIV+tyifaNdSMlPh9j+6mQ/cLfpOznLyAuzgV/JQysyECpkBQLVMSyvjlr2fBUSA9wFQ=="],
 

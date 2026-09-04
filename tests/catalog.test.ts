@@ -9,6 +9,7 @@ describe("command catalog", () => {
     expect(names).toContain("remote init");
     expect(names).toContain("catalog");
     expect(names).toContain("fork");
+    expect(names).toContain("delete");
     expect(names).toContain("version");
   });
 });

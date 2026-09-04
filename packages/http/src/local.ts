@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { Hono } from "hono";
 import {
   HtmlarkError,
+  deleteArtifact,
   diffArtifacts,
   getArtifactCommand,
   importArtifact,
@@ -59,11 +60,13 @@ export function createLocalApp(deps: LocalDeps) {
         await next();
         return;
       }
-      if (!isGet) {
+      if (!isGet && c.req.method !== "DELETE") {
         const ct = c.req.header("content-type") ?? "";
         if (!ct.includes("application/json")) {
           return json(c, { ok: false, error: "content-type", code: "VALIDATION" }, 400);
         }
+      }
+      if (!isGet) {
         const origin = c.req.header("origin");
         if (origin && !loopbackOrigins(deps.bindHost, deps.port).has(origin)) {
           return json(c, { ok: false, error: "origin", code: "VALIDATION" }, 403);
@@ -180,6 +183,10 @@ fetch('/v1/artifacts',{headers:{'X-Htmlark-Token':token}}).then(r=>r.json()).the
       const id = c.req.param("id");
       const body = await c.req.json();
       return json(c, await restoreArtifact(deps.repo, { id, version: Number(body.version), baseVersion: body.baseVersion }), 200);
+    })
+    .delete("/v1/artifacts/:id", async (c) => {
+      const id = c.req.param("id");
+      return json(c, await deleteArtifact(deps.repo, id), 200);
     })
     .post("/v1/import", async (c) => {
       const body = await c.req.json();

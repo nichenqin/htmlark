@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { HtmlarkError, MemoryProjectArtifactRegistry, MemoryRepository, putArtifact, restoreArtifact } from "@htmlark/core";
+import { HtmlarkError, MemoryProjectArtifactRegistry, MemoryRepository, deleteArtifact, putArtifact, restoreArtifact } from "@htmlark/core";
 
 describe("putArtifact", () => {
   test("create then update same key", async () => {
@@ -52,5 +52,18 @@ describe("putArtifact", () => {
     });
     const restored = await restoreArtifact(repo, { id, version: 1 });
     expect((restored["artifact"] as { version: number }).version).toBe(3);
+  });
+
+  test("delete hides artifact", async () => {
+    const repo = new MemoryRepository();
+    const registry = new MemoryProjectArtifactRegistry();
+    const first = await putArtifact(repo, registry, {
+      content: "<p style='color:var(--htmlark-fg)'>one</p>",
+      type: "html",
+      name: "n",
+    });
+    const id = (first["artifact"] as { id: string }).id;
+    await deleteArtifact(repo, id);
+    await expect(repo.getArtifact(id)).rejects.toBeInstanceOf(HtmlarkError);
   });
 });

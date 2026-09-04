@@ -34,6 +34,7 @@ export { MemoryRepository } from "./repo/memory.ts";
 export { MemoryProjectArtifactRegistry } from "./registry/memory.ts";
 export { MemoryPublisher } from "./publisher/memory.ts";
 export {
+  deleteArtifact,
   diffArtifacts,
   getArtifactCommand,
   importArtifact,

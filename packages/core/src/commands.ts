@@ -141,13 +141,26 @@ export async function getArtifactCommand(
   const head = await repo.getArtifact(opts.id);
   const ver = await repo.readVersion(opts.id, opts.version ?? head.headVersion);
   const preview = opts.full ? ver.content : ver.content.slice(0, 2048);
+  const versions = [];
+  for (let n = head.headVersion; n >= 1; n--) {
+    const row = await repo.readVersion(opts.id, n);
+    versions.push({
+      version: row.version,
+      hash: hashJson(row.blobHash),
+      size: row.size,
+      createdAt: new Date(row.createdAt).toISOString(),
+      restoredFrom: row.restoredFrom,
+      dirty: row.dirty,
+      warnings: row.warnings,
+    });
+  }
   return {
     ok: true,
     artifact: {
       ...artifactJson(head, { hash: hashJson(ver.blobHash), size: ver.size }),
       warnings: ver.warnings,
       provenance: ver.provenance,
-      versions: [{ version: ver.version, hash: hashJson(ver.blobHash), size: ver.size, createdAt: new Date(ver.createdAt).toISOString(), restoredFrom: ver.restoredFrom, dirty: ver.dirty, warnings: ver.warnings }],
+      versions,
     },
     truncated: !opts.full && ver.content.length > 2048,
     preview,
@@ -161,6 +174,11 @@ export async function listArtifacts(repo: ArtifactRepository, opts: ListOpts): P
     total: page.total,
     artifacts: page.artifacts.map((a) => artifactJson(a)),
   };
+}
+
+export async function deleteArtifact(repo: ArtifactRepository, id: string): Promise<Record<string, unknown>> {
+  await repo.softDelete(id);
+  return { ok: true, id };
 }
 
 export async function diffArtifacts(repo: ArtifactRepository, opts: DiffOpts): Promise<Record<string, unknown>> {

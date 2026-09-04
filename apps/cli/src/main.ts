@@ -6,6 +6,7 @@ import {
   HtmlarkError,
   PutOptsSchema,
   RecipeV0Schema,
+  deleteArtifact,
   diffArtifacts,
   getArtifactCommand,
   importArtifact,
@@ -189,7 +190,7 @@ const openCmd = defineCommand({
 });
 
 const serve = defineCommand({
-  meta: { name: "serve", description: "Loopback HTTP" },
+  meta: { name: "serve", description: "Loopback HTTP admin on 127.0.0.1:7420" },
   args: {
     port: { type: "string" },
     bind: { type: "string" },
@@ -203,7 +204,9 @@ const serve = defineCommand({
       port: args.port ? Number(args.port) : undefined,
       bind: args.bind as string | undefined,
     });
-    process.stdout.write(`htmlark listening ${started.url}\n`);
+    process.stdout.write(`${started.already ? "already listening" : "htmlark listening"} ${started.url}\n`);
+    openUrl(`${started.url}/`);
+    if (started.already) return;
     await new Promise(() => undefined);
   },
 });
@@ -438,6 +441,23 @@ const forkCmd = defineCommand({
   },
 });
 
+const deleteCmd = defineCommand({
+  meta: { name: "delete", description: "Soft-delete an artifact" },
+  args: {
+    id: { type: "string", required: true },
+    json: { type: "boolean", default: false },
+  },
+  async run({ args }) {
+    try {
+      const { repo } = openStore();
+      const result = await deleteArtifact(repo, args.id as string);
+      printJson(result, Boolean(args.json), "deleted");
+    } catch (err) {
+      fail(err, Boolean(args.json));
+    }
+  },
+});
+
 const undelete = defineCommand({
   meta: { name: "undelete", description: "Clear deleted_at" },
   args: {
@@ -454,6 +474,7 @@ const undelete = defineCommand({
     }
   },
 });
+
 const versionCmd = defineCommand({
   meta: { name: "version", description: "Print htmlark version" },
   run() {
@@ -469,6 +490,7 @@ const main = defineCommand({
     list,
     diff,
     restore,
+    delete: deleteCmd,
     undelete,
     fork: forkCmd,
     open: openCmd,

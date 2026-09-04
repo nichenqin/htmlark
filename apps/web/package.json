@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tanstack/svelte-query": "^6.1.48",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
     "typescript": "5.9",

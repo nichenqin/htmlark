@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { MemoryProjectArtifactRegistry, MemoryRepository, putArtifact } from "@htmlark/core";
+import { HtmlarkError, MemoryProjectArtifactRegistry, MemoryRepository, putArtifact } from "@htmlark/core";
 import { createLocalApp } from "@htmlark/http";
 
 function app() {
@@ -47,6 +47,32 @@ describe("createLocalApp D26", () => {
       headers: { ...loopback, "x-htmlark-token": "secret-token" },
     });
     expect(res.status).toBe(200);
+  });
+
+  test("delete with token", async () => {
+    const repo = new MemoryRepository();
+    const registry = new MemoryProjectArtifactRegistry();
+    const created = await putArtifact(repo, registry, {
+      content: "<p style='color:var(--htmlark-fg)'>ok</p>",
+      type: "html",
+      name: "n",
+    });
+    const id = (created["artifact"] as { id: string }).id;
+    const local = createLocalApp({
+      repo,
+      registry,
+      token: "secret-token",
+      bindHost: "127.0.0.1",
+      port: 7420,
+      projectRoot: "/tmp",
+      vendorGet: () => null,
+    });
+    const res = await local.request(`http://127.0.0.1:7420/v1/artifacts/${id}`, {
+      method: "DELETE",
+      headers: { ...loopback, "x-htmlark-token": "secret-token" },
+    });
+    expect(res.status).toBe(200);
+    await expect(repo.getArtifact(id)).rejects.toBeInstanceOf(HtmlarkError);
   });
 
   test("mutation requires json content-type", async () => {

@@ -3,12 +3,20 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import type { ArtifactRepository, ProjectArtifactRegistry } from "@htmlark/core";
+import { HtmlarkError, type ArtifactRepository, type ProjectArtifactRegistry } from "@htmlark/core";
 import { createLocalApp } from "@htmlark/http";
 import { SqliteCasRepository } from "./adapters/sqlite-cas.ts";
 import { prefetchVendors, vendorGet } from "./adapters/vendor-cache.ts";
 import { defaultBind, defaultPort, htmlarkHome } from "./home.ts";
 import { htmlarkSpawn } from "./self.ts";
+
+function resolveWebRoot(): string | undefined {
+  const here = import.meta.dirname;
+  for (const p of [join(here, "admin"), join(here, "../../web/dist")]) {
+    if (existsSync(join(p, "index.html"))) return p;
+  }
+  return undefined;
+}
 
 export function tokenPath(home: string): string {
   return join(home, "session.token");
@@ -32,11 +40,21 @@ export async function startServer(opts: {
   projectRoot: string;
   port?: number;
   bind?: string;
-}): Promise<{ port: number; token: string; url: string }> {
+}): Promise<{ port: number; token: string; url: string; already?: boolean }> {
   const home = htmlarkHome();
   const port = opts.port ?? defaultPort();
   const bind = opts.bind ?? defaultBind();
   const token = loadOrCreateToken(home);
+  const url = `http://${bind}:${port}`;
+  try {
+    const r = await fetch(`${url}/health`);
+    if (r.ok) {
+      const body = (await r.json()) as { ok?: boolean };
+      if (body.ok) return { port, token, url, already: true };
+    }
+  } catch {
+    /* not htmlark */
+  }
   const app = createLocalApp({
     repo: opts.repo,
     registry: opts.registry,
@@ -49,13 +67,11 @@ export async function startServer(opts: {
       return vendorGet(home, spec);
     },
     vendorPrefetch: (specs) => prefetchVendors(home, specs),
-    webRoot: existsSync(join(import.meta.dirname, "../../web/dist/index.html"))
-      ? join(import.meta.dirname, "../../web/dist")
-      : undefined,
+    webRoot: resolveWebRoot(),
   });
   const server = createServer(async (req, res) => {
     const host = req.headers.host ?? `${bind}:${port}`;
-    const url = `http://${host}${req.url ?? "/"}`;
+    const reqUrl = `http://${host}${req.url ?? "/"}`;
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) {
       if (typeof v === "string") headers.set(k, v);
@@ -63,7 +79,7 @@ export async function startServer(opts: {
     const chunks: Buffer[] = [];
     for await (const chunk of req) chunks.push(chunk as Buffer);
     const body = chunks.length ? Buffer.concat(chunks) : undefined;
-    const request = new Request(url, { method: req.method, headers, body });
+    const request = new Request(reqUrl, { method: req.method, headers, body });
     const response = await app.fetch(request);
     res.statusCode = response.status;
     response.headers.forEach((value, key) => res.setHeader(key, value));
@@ -73,7 +89,15 @@ export async function startServer(opts: {
   const { promise, resolve, reject } = Promise.withResolvers<void>();
   server.listen(port, bind, () => resolve());
   server.on("error", reject);
-  await promise;
+  try {
+    await promise;
+  } catch (err) {
+    const code = err && typeof err === "object" && "code" in err ? String(err.code) : "";
+    if (code === "EADDRINUSE") {
+      throw new HtmlarkError("VALIDATION", `port in use: ${bind}:${port}. Set HTMLARK_PORT.`, { port });
+    }
+    throw err;
+  }
   writeFileSync(pidPath(home), String(process.pid));
   process.on("exit", () => {
     try {
@@ -82,7 +106,7 @@ export async function startServer(opts: {
       /* ignore */
     }
   });
-  return { port, token, url: `http://${bind}:${port}` };
+  return { port, token, url };
 }
 
 export async function ensureServer(opts: {
