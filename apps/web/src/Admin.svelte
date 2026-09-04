@@ -14,9 +14,9 @@
   let search = $state("");
   let selected = $state<string | null>(null);
   let pin = $state<number | null>(null);
+  let pane = $state<"preview" | "source" | "versions">("preview");
   let diffFrom = $state("");
   let key = $state("");
-  let importName = $state("");
   let importError = $state<string | null>(null);
 
   const list = createQuery(() => ({
@@ -56,11 +56,11 @@
   }));
 
   const importM = createMutation(() => ({
-    mutationFn: (input: { key: string; content: string; name: string }) => importArtifact(input.key, input.content, input.name),
+    mutationFn: (input: { key: string; content: string; name: string }) =>
+      importArtifact(input.key, input.content, input.name),
     onSuccess: () => {
       importError = null;
       key = "";
-      importName = "";
       void qc.invalidateQueries({ queryKey: ["artifacts"] });
     },
     onError: (err: Error) => {
@@ -71,6 +71,7 @@
   function pick(a: Artifact) {
     selected = a.id;
     pin = null;
+    pane = "preview";
     diffFrom = "";
   }
 
@@ -79,98 +80,111 @@
     if (!file) return;
     const content = await file.text();
     const k = key.trim() || file.name.replace(/\.[^.]+$/, "");
-    importM.mutate({ key: k, content, name: importName.trim() || k });
+    importM.mutate({ key: k, content, name: k });
   }
 </script>
 
 <div class="shell">
-  <aside>
-    <div class="brand">htmlark</div>
-    <nav>
-      <span class="on">Artifacts</span>
-    </nav>
-    <p class="hint">Loopback admin. CLI remains the source of truth.</p>
-  </aside>
-  <section class="main">
-    <header class="bar">
-      <input bind:value={search} placeholder="Search name or id" />
-      <label class="import">
-        Import
-        <input type="file" accept=".html,.htm,.md,text/html,text/markdown" onchange={onFile} />
-      </label>
-      <input class="key" bind:value={key} placeholder="import --key" />
-    </header>
-    {#if importError}
-      <p class="err">{importError}</p>
-    {/if}
-    {#if list.isPending}
-      <p class="mute">Loading…</p>
-    {:else if list.isError}
-      <p class="err">{list.error.message}</p>
-    {:else}
-      <div class="split">
+  <header class="top">
+    <a class="wordmark" href="/">htmlark</a>
+    <input class="search" bind:value={search} placeholder="Search name or id" />
+    <input class="key" bind:value={key} placeholder="key" />
+    <label class="import">
+      Import
+      <input type="file" accept=".html,.htm,.md,text/html,text/markdown" onchange={onFile} />
+    </label>
+  </header>
+  {#if importError}
+    <p class="err">{importError}</p>
+  {/if}
+  <div class="body">
+    <div class="list">
+      {#if list.isPending}
+        <p class="mute">Loading library</p>
+      {:else if list.isError}
+        <p class="err">{list.error.message}</p>
+      {:else if (list.data?.artifacts.length ?? 0) === 0}
+        <p class="mute">Empty. Put a page with htmlark put --key, or Import.</p>
+      {:else}
         <table>
           <thead>
             <tr>
               <th>Name</th>
-              <th>Id</th>
-              <th>Ver</th>
-              <th>Type</th>
+              <th>Key / id</th>
+              <th>v</th>
               <th>Updated</th>
             </tr>
           </thead>
           <tbody>
             {#each list.data?.artifacts ?? [] as a (a.id)}
               <tr class:sel={selected === a.id} onclick={() => pick(a)}>
-                <td>{a.name}{#if a.dirty}<span class="dirty"> dirty</span>{/if}</td>
+                <td>
+                  {a.name}
+                  {#if a.dirty}<span class="dirty">dirty</span>{/if}
+                </td>
                 <td class="mono">{a.id}</td>
-                <td>v{a.version}</td>
-                <td>{a.type}</td>
-                <td>{a.updatedAt.slice(0, 19).replace("T", " ")}</td>
+                <td>{a.version}</td>
+                <td class="mute">{a.updatedAt.slice(0, 16).replace("T", " ")}</td>
               </tr>
             {/each}
           </tbody>
         </table>
-        {#if selected && detail.data}
-          {@const art = detail.data.artifact}
-          <div class="detail">
-            <div class="detail-h">
-              <strong>{art.name}</strong>
-              <a href="/a/{art.id}{pin ? `?v=${pin}` : ""}" target="_blank" rel="noreferrer">Open viewer</a>
-            </div>
-            <p class="mono">{art.id}</p>
-            <div class="vers">
-              {#each art.versions as v (v.version)}
-                <button type="button" class:on={viewVersion === v.version} onclick={() => (pin = v.version)}>
-                  v{v.version}{#if v.dirty}*{/if}
-                </button>
-              {/each}
-            </div>
+      {/if}
+    </div>
+    <aside class="inspect">
+      {#if !selected}
+        <p class="mute pad">Select a page. The inspector shows the sandboxed render, source, and versions.</p>
+      {:else if detail.isPending}
+        <p class="mute pad">Loading</p>
+      {:else if detail.data}
+        {@const art = detail.data.artifact}
+        <div class="frame">
+          <div class="frame-bar" role="tablist">
+            <button class="tab" type="button" role="tab" aria-selected={pane === "preview"} onclick={() => (pane = "preview")}>Preview</button>
+            <button class="tab" type="button" role="tab" aria-selected={pane === "source"} onclick={() => (pane = "source")}>Source</button>
+            <button class="tab" type="button" role="tab" aria-selected={pane === "versions"} onclick={() => (pane = "versions")}>Versions</button>
+            <span class="meta">{art.name} · v{viewVersion}</span>
+          </div>
+          {#if pane === "preview"}
             <iframe title="preview" src="/render/{art.id}/{viewVersion}"></iframe>
-            <pre class="src">{detail.data.preview}</pre>
+          {:else if pane === "source"}
+            <pre class="source">{detail.data.preview}</pre>
+          {:else}
+            <ul class="versions">
+              {#each art.versions as v (v.version)}
+                <li>
+                  <button type="button" class:on={viewVersion === v.version} onclick={() => (pin = v.version)}>
+                    v{v.version}{v.version === art.version ? " head" : ""}{v.dirty ? " dirty" : ""}{v.restoredFrom
+                      ? ` from v${v.restoredFrom}`
+                      : ""}
+                  </button>
+                </li>
+              {/each}
+            </ul>
             {#if art.versions.length > 1}
-              <label>
+              <label class="difflab">
                 Diff from
                 <select bind:value={diffFrom}>
-                  <option value="">—</option>
+                  <option value="">none</option>
                   {#each art.versions as v (v.version)}
                     <option value={String(v.version)}>v{v.version}</option>
                   {/each}
                 </select>
               </label>
               {#if diffQ.data?.diff}
-                <pre class="src">{diffQ.data.diff}</pre>
+                <pre class="source">{diffQ.data.diff}</pre>
               {/if}
             {/if}
-            <div class="actions">
-              <button type="button" onclick={() => restoreM.mutate(viewVersion)}>Restore v{viewVersion}</button>
-              <button type="button" class="danger" onclick={() => deleteM.mutate()}>Delete</button>
-            </div>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </section>
+          {/if}
+        </div>
+        <div class="actions">
+          <a class="ghost" href="/a/{art.id}{pin ? `?v=${pin}` : ""}" target="_blank" rel="noreferrer">Open</a>
+          <button type="button" onclick={() => restoreM.mutate(viewVersion)}>Restore v{viewVersion}</button>
+          <button type="button" class="danger" onclick={() => deleteM.mutate()}>Delete</button>
+        </div>
+      {/if}
+    </aside>
+  </div>
 </div>
 
 <style>
@@ -179,68 +193,57 @@
     margin: 0;
   }
   :global(body) {
-    font-family: ui-sans-serif, system-ui, sans-serif;
-    background: #0f1114;
-    color: #e8eaed;
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    background: #f6f7f8;
+    color: #121417;
   }
   .shell {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    height: 100%;
-  }
-  aside {
-    border-right: 1px solid #2a2e34;
-    padding: 16px 12px;
-    background: #16181c;
-  }
-  .brand {
-    font-weight: 650;
-    margin-bottom: 18px;
-  }
-  nav .on {
-    display: block;
-    padding: 6px 8px;
-    background: #2a3140;
-    border-radius: 4px;
-  }
-  .hint {
-    color: #8b919a;
-    font-size: 12px;
-    margin-top: 24px;
-  }
-  .main {
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    height: 100%;
   }
-  .bar {
+  .top {
     display: flex;
-    gap: 8px;
-    padding: 12px;
-    border-bottom: 1px solid #2a2e34;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 14px;
+    border-bottom: 1px solid #d8dee6;
+    background: #fff;
   }
-  input,
-  select,
-  button {
-    font: inherit;
-    color: inherit;
-    background: #1c1f24;
-    border: 1px solid #3a4048;
-    border-radius: 4px;
-    padding: 6px 8px;
+  .wordmark {
+    color: #121417;
+    text-decoration: none;
+    font-weight: 600;
+    width: 88px;
   }
-  .bar input {
+  .search {
     flex: 1;
   }
   .key {
-    max-width: 180px;
+    width: 140px;
+  }
+  input,
+  select,
+  button,
+  .import {
+    font: 500 13px/1.2 "IBM Plex Sans", ui-sans-serif, sans-serif;
+    color: #121417;
+    background: #fff;
+    border: 1px solid #d8dee6;
+    border-radius: 0;
+    padding: 6px 8px;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  button:focus-visible,
+  .import:focus-within {
+    outline: 2px solid #2f6fed;
+    outline-offset: 1px;
   }
   .import {
     position: relative;
     overflow: hidden;
-    padding: 6px 10px;
-    border: 1px solid #3a4048;
-    border-radius: 4px;
     cursor: pointer;
   }
   .import input {
@@ -248,6 +251,17 @@
     inset: 0;
     opacity: 0;
     cursor: pointer;
+  }
+  .body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    min-height: 0;
+    flex: 1;
+  }
+  .list {
+    overflow: auto;
+    background: #fff;
+    border-right: 1px solid #d8dee6;
   }
   table {
     width: 100%;
@@ -257,85 +271,155 @@
   th,
   td {
     text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid #2a2e34;
+    padding: 0 12px;
+    height: 36px;
+    border-bottom: 1px solid #e6ebf0;
+    white-space: nowrap;
   }
   th {
-    color: #8b919a;
-    font-weight: 550;
+    position: sticky;
+    top: 0;
+    background: #f6f7f8;
+    color: #5c6570;
+    font-weight: 500;
+  }
+  td.mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: #5c6570;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   tr {
     cursor: pointer;
   }
-  tr.sel,
-  tr:hover {
-    background: #1c222b;
+  tr:hover td {
+    background: #f0f3f6;
   }
-  .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12px;
-    color: #9aa3ad;
+  tr.sel td {
+    background: #e8eefc;
   }
   .dirty {
-    color: #e0a154;
+    margin-left: 6px;
+    color: #9a5b12;
+    font-size: 11px;
   }
-  .split {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 420px;
-    min-height: 0;
-    flex: 1;
-  }
-  .detail {
-    border-left: 1px solid #2a2e34;
+  .inspect {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #f6f7f8;
     padding: 12px;
-    overflow: auto;
+    gap: 10px;
   }
-  .detail-h {
+  .frame {
+    flex: 1;
+    min-height: 0;
     display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #d8dee6;
+    border-radius: 8px;
+    overflow: hidden;
   }
-  a {
-    color: #8ab4f8;
-  }
-  .vers {
+  .frame-bar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin: 8px 0;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #d8dee6;
+    background: #f6f7f8;
   }
-  .vers button.on {
-    background: #2f6fed;
-    border-color: #2f6fed;
+  .tab {
+    border: 0;
+    background: transparent;
+    padding: 4px 8px;
+    color: #5c6570;
+  }
+  .tab[aria-selected="true"] {
+    color: #2f6fed;
+    box-shadow: inset 0 -2px 0 #2f6fed;
+  }
+  .meta {
+    margin-left: auto;
+    color: #5c6570;
+    font-size: 12px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
   }
   iframe {
+    flex: 1;
     width: 100%;
-    height: 220px;
-    border: 1px solid #2a2e34;
+    border: 0;
+    background: #fff;
+    min-height: 220px;
+  }
+  .source {
+    flex: 1;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    font: 12px/1.45 "IBM Plex Mono", ui-monospace, monospace;
+    background: #121417;
+    color: #e8eaed;
+  }
+  .versions {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+  }
+  .versions button {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 4px;
     background: #fff;
   }
-  .src {
-    max-height: 180px;
-    overflow: auto;
-    background: #12141a;
-    padding: 8px;
-    font-size: 11px;
+  .versions button.on {
+    border-color: #2f6fed;
+    color: #2f6fed;
+  }
+  .difflab {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 0 8px 8px;
+    color: #5c6570;
+    font-size: 13px;
   }
   .actions {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
+  }
+  .ghost {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 8px;
+    border: 1px solid #d8dee6;
+    color: #121417;
+    text-decoration: none;
+    background: #fff;
   }
   .danger {
-    border-color: #8a3030;
-    color: #f0a0a0;
+    margin-left: auto;
+    color: #8a1f1f;
+    border-color: #e3b6b6;
+  }
+  button:active,
+  .import:active,
+  .ghost:active {
+    transform: translateY(1px);
   }
   .err {
-    color: #f28b82;
-    padding: 0 12px;
+    margin: 0;
+    padding: 8px 14px;
+    color: #8a1f1f;
+    background: #f8e8e8;
   }
   .mute {
-    color: #8b919a;
-    padding: 12px;
+    color: #5c6570;
+    font-size: 13px;
+  }
+  .pad {
+    padding: 16px;
   }
 </style>
